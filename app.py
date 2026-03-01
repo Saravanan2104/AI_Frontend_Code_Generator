@@ -18,27 +18,24 @@ os.environ["GROQ_API_KEY"] = os.getenv("groq_key")
 model = init_chat_model(
     "groq:llama-3.1-8b-instant",
     temperature=0.3,
-    max_tokens=4000
+    max_tokens=5000
 )
 
 # System Prompt
 sys_temp = """
 You are a Senior frontend developer with 20 years experience.
-
 Generate production-ready frontend code.
-
-MANDATORY FORMAT:
+MANDATORY FORMAT: (Exact delimeters)
 --html--
-[HTML]
+[HTML code here]
 --html--
-
 --css--
-[CSS]
+[CSS code here]
 --css--
-
 --js--
-[JS]
+[java script code here]
 --js--
+name should be index.html, styles.css, script.js only.
 """
 
 hum_temp = "Build a {description} using following {content}"
@@ -53,14 +50,7 @@ chain = chat_template | model | parser
 
 
 # Safe Extract Function
-def extract(text, tag):
-    try:
-        parts = text.split(f"--{tag}--")
-        if len(parts) >= 3:
-            return parts[1].strip()
-        return ""
-    except:
-        return ""
+
 
 
 # Main Function
@@ -70,23 +60,23 @@ def generate_frontend(description, content):
         "content": content
     })
 
-    html = extract(response, "html")
-    css = extract(response, "css")
-    js = extract(response, "js")
+    html = response.split('--html--')
+    css = response.split('--css--')
+    js = response.split('--js--')
 
     # Create zip
     zip_filename = "frontend_project.zip"
     with zipfile.ZipFile(zip_filename, "w") as zipf:
-        zipf.writestr("index.html", html)
-        zipf.writestr("styles.css", css)
-        zipf.writestr("script.js", js)
+        zipf.writestr("index.html", html[1])
+        zipf.writestr("styles.css", css[1])
+        zipf.writestr("script.js", js[1])
 
     return zip_filename
 
 
 # Gradio UI
 with gr.Blocks() as demo:
-    gr.Markdown("# 🚀 AI Frontend Code Generator")
+    gr.Markdown("# AI Frontend Code Generator")
 
     description_input = gr.Textbox(label="Project Description", lines=6)
     content_input = gr.Textbox(label="Project Content", lines=10)
